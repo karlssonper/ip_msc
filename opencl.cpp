@@ -2,14 +2,14 @@
 
 namespace ImageProcessing {
 
-inline bool _CheckGetPlatformIdError(cl_int);
-inline bool _CheckGetDeviceIdError(cl_int);
-inline bool _CheckCreateProgram(cl_int);
-inline bool _CheckBuildProgramError(cl_int, cl_program, cl_device_id);
-inline bool _CheckCreateKernelError(cl_int);
-inline bool _CheckCreateBufferError(cl_int);
-inline bool _CheckEnqueueNDRangeKernelError(cl_int);
-inline bool _CheckEnqueueReadBufferError(cl_int);
+bool _CheckGetPlatformIdError(cl_int);
+bool _CheckGetDeviceIdError(cl_int);
+bool _CheckCreateProgram(cl_int);
+bool _CheckBuildProgramError(cl_int, cl_program, cl_device_id);
+bool _CheckCreateKernelError(cl_int);
+bool _CheckCreateBufferError(cl_int);
+bool _CheckEnqueueNDRangeKernelError(cl_int);
+bool _CheckEnqueueReadBufferError(cl_int);
 
 OpenCL::OpenCL(DeviceType t)
 {
@@ -69,15 +69,14 @@ bool OpenCL::Build(const std::string & code)
 
     // Build program
     err = clBuildProgram(program, 1, &_device_id, NULL, NULL, NULL);
-    if (_CheckBuildProgramError(err, program, _device_id)) {
+    if (!_CheckBuildProgramError(err, program, _device_id)) {
         return false;
     }
 
     // Create kernel from program
     _kernel = clCreateKernel(program, "test", &err);
     if (!_CheckCreateKernelError(err)) {
-        std::cerr << "hepp" <<std::endl;
-            return false;
+        return false;
     }
 
     // Create input Buffers on the device and copy data from host
@@ -135,7 +134,7 @@ bool OpenCL::Process()
     //_SetParametersAsKernelArg(_GetParametersVector<int>(), _kernel, argc);
     //_SetParametersAsKernelArg(_GetParametersVector<float>(), _kernel, argc);
 
-    std::cerr << "we on tho" << std::endl;
+    std::cerr << "we on tho" << _queue << " " <<  _kernel << std::endl;
     
     // Execute kernel, first output buffer dimensiosn decides the work size.
     const size_t global_work_size[] = { _outputBuffers.front().width,
