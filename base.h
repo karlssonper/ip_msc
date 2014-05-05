@@ -8,8 +8,6 @@
 #include <typeinfo>
 #include <stdexcept>
 
-#include "types.h"
-
 namespace ImageProcessing {
 
 struct Buffer
