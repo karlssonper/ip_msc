@@ -58,6 +58,7 @@ void Base::SetParameter(const std::string & name, const T & value)
     for (size_t i = 0; i < v.size(); ++i) {
         if (v[i].first == name) {
             v[i].second = value;
+            return;
         }
     }
 
@@ -65,32 +66,15 @@ void Base::SetParameter(const std::string & name, const T & value)
     if (!found) {
         v.push_back(make_pair(name, value));
     }
-    
 }
 
 template<typename T>
 std::vector<std::pair<std::string, T> > & Base::_GetParametersVector()
 {
-    /* throw std::invalid_argument(std::string("Parameter of type ") +
+    throw std::invalid_argument(std::string("Parameter of type ") +
                                 std::string(typeid(T).name()) +
                                 std::string(" not yet supported."));
-    */
 }
-/*
-template<>
-std::vector<std::pair<std::string,int> > & Base::_GetParametersVector<int>()
-{
-    return _intParameters;
-}
-
-
-template<>
-std::vector<std::pair<std::string,float> > & Base::_GetParametersVector<float>()
-{
-    return _floatParameters;
-}
-*/
-
 
 } //end namespace
 

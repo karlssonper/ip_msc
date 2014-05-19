@@ -74,11 +74,20 @@ bool OpenCL::Build(const std::string & code)
     }
 
     // Create kernel from program
-    _kernel = clCreateKernel(program, "test", &err);
+    _kernel = clCreateKernel(program, "ip_kernel", &err);
     if (!_CheckCreateKernelError(err)) {
         return false;
     }
 
+    for (size_t i = 0; i < _device_input_buffers.size(); ++i) {
+        clReleaseMemObject(_device_input_buffers[i]);
+    }
+    _device_input_buffers.clear();
+    for (size_t i = 0; i < _device_output_buffers.size(); ++i) {
+        clReleaseMemObject(_device_output_buffers[i]);
+    }
+    _device_output_buffers.clear();
+    
     // Create input Buffers on the device and copy data from host
     // Todo: Might be better to explore Pinned memory here
     _device_input_buffers.reserve(_inputBuffers.size());
@@ -88,7 +97,6 @@ bool OpenCL::Build(const std::string & code)
             clCreateBuffer(_ctx, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                            b.width*b.height*b.bytesPerPixel, b.data, &err));
         _CheckCreateBufferError(err);
-        
     }
 
     // Create output Buffers on the device
@@ -109,8 +117,12 @@ void _SetParametersAsKernelArg(const std::vector<std::pair<std::string,T> > & v,
                                const cl_kernel & kernel,
                                cl_int & argc)
 {
+    cl_int err;
     for (size_t i = 0; i < v.size(); ++i) {
-        clSetKernelArg(kernel, argc++, sizeof(T), &v[i].second);
+        err = clSetKernelArg(kernel, argc++, sizeof(T), &v[i].second);
+        if (err != CL_SUCCESS) {
+            std::cout << "ERROR: "<< err << std::endl; // todo handle in sep function
+        }
     }
 }
 
@@ -129,21 +141,21 @@ bool OpenCL::Process()
     for (size_t i = 0; i < _device_output_buffers.size(); ++i) {
         clSetKernelArg(_kernel, argc++, size, &_device_output_buffers[i]);
     }
-    std::cerr << "we on tho" << std::endl;
-    
-    //_SetParametersAsKernelArg(_GetParametersVector<int>(), _kernel, argc);
-    //_SetParametersAsKernelArg(_GetParametersVector<float>(), _kernel, argc);
+      
+    _SetParametersAsKernelArg(_GetParametersVector<int>(), _kernel, argc);
+    _SetParametersAsKernelArg(_GetParametersVector<float>(), _kernel, argc);
 
-    std::cerr << "we on tho" << _queue << " " <<  _kernel << std::endl;
-    
-    // Execute kernel, first output buffer dimensiosn decides the work size.
+     // Execute kernel, first output buffer dimensiosn decides the work size.
     const size_t global_work_size[] = { _outputBuffers.front().width,
                                         _outputBuffers.front().height };
+
+    std::cout << "Running OpenCL kernel with global work size: "
+              << global_work_size[0] << " x " << global_work_size[1] << std::endl;
+
+    
     err = clEnqueueNDRangeKernel(_queue, _kernel, 2, NULL,
                            global_work_size, NULL, 0, NULL, NULL);
     _CheckEnqueueNDRangeKernelError(err);
-
-    std::cerr << "we on tho" << std::endl;
     
     // Copy data from device to host
     for (size_t i = 0; i < _device_output_buffers.size(); ++i) {
@@ -152,11 +164,7 @@ bool OpenCL::Process()
                             0, b.width * b.height * b.bytesPerPixel, b.data, 0, NULL, NULL);
         _CheckEnqueueReadBufferError(err);
     }
-
-    std::cerr << "we on tho" << std::endl;
-
-    //clFinish(_queue);
-   std::cerr << "we on tho" << std::endl;
+    
     return true;
 }
 
