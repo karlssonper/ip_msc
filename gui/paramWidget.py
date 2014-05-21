@@ -27,7 +27,18 @@ class ParametersWidget(QtGui.QWidget):
         vlay.addWidget(outputBuffersBox)
         vlay.addWidget(parametersBox)
         self.setLayout(vlay)
-    
+
+    def clear(self):
+        for b in self.inputBuffers:
+            b.remove()
+        for b in self.outputBuffers:
+            b.remove()
+        for p in self.params:
+            p.remove()
+        self.inputBuffers = []
+        self.outputBuffers = []
+        self.params = []
+        
     def addInputBuffer(self, name):
         self.inputBuffers.append(
             Buffer(name, self.inputBuffersGrid, len(self.inputBuffers), False))
@@ -44,14 +55,20 @@ class ParametersWidget(QtGui.QWidget):
 
 class Buffer(object):
     def __init__(self, name, grid, row, save = True):
-        label = QtGui.QLabel(name)
+        self.name = name
+        self.label = QtGui.QLabel(name)
         self.lineEdit = QtGui.QLineEdit()
         self.btn = QtGui.QPushButton("..")
-        grid.addWidget(label, row, 0)
+        grid.addWidget(self.label, row, 0)
         grid.addWidget(self.lineEdit, row, 1)
         grid.addWidget(self.btn, row, 2)
         self.btn.clicked.connect(self.updateLineEdit)
         self.save = save
+
+    def remove(self):
+        self.label.deleteLater()
+        self.lineEdit.deleteLater()
+        self.btn.deleteLater()
 
     def updateLineEdit(self):
         func = QtGui.QFileDialog.getOpenFileName if not self.save else \
@@ -63,11 +80,11 @@ class Buffer(object):
 class Parameter(object):
     def __init__(self, grid, row, name, defaultVal, minVal, maxVal, typename, callbackFunc):
         self.callbackFunc = callbackFunc
-        label = QtGui.QLabel(name)
+        self.label = QtGui.QLabel(name)
         self.name = name
         self.lineEdit = QtGui.QLineEdit()
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        grid.addWidget(label, row, 0)
+        grid.addWidget(self.label, row, 0)
         grid.addWidget(self.lineEdit, row, 1)
         grid.addWidget(self.slider, row, 2)
 
@@ -87,7 +104,10 @@ class Parameter(object):
         txt = str(int(defaultVal)) if typename == "int" else str(defaultVal)
         self.lineEdit.setText(txt)
 
-      
+    def remove(self):
+        self.label.deleteLater()
+        self.lineEdit.deleteLater()
+        self.slider.deleteLater()
 
     def onTextChange(self):
         if not self.updateLineEdit:

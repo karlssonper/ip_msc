@@ -1,0 +1,27 @@
+/* --- Meta Data - START ---
+    type CUDA
+    input_buffer imgA /home/per/dev/ip_msc/bin/images/lena.png
+    input_buffer imgB /home/per/dev/ip_msc/bin/images/baboon.png
+    output_buffer out_blend /home/per/dev/ip_msc/bin/images/out_cuda.png
+    double alpha 0.5 0.5 0 1.0
+    double red 1.0 1.0 0 1.0
+    double green 1.0 1.0 0 1.0
+    double blue 1.0 1.0 0 1.0
+    ------ Meta Data - END --- */
+
+__global__ void kernel( unsigned char * imgA,
+                        unsigned char * imgB,
+                        unsigned char * out_blend,
+                        float alpha,
+                        float red,
+                        float green,
+                        float blue)
+{ 
+    const int x = blockIdx.x;
+    const int y = blockIdx.y;
+
+    const int idx = 3*(x + y * 512);
+    out_blend[idx] = red*(alpha * imgA[idx] + (1-alpha) * imgB[idx]);
+    out_blend[idx+1] = green*(alpha * imgA[idx+1] + (1-alpha) * imgB[idx+1]);
+    out_blend[idx+2] = blue*(alpha * imgA[idx+2] + (1-alpha) * imgB[idx+2]);
+}

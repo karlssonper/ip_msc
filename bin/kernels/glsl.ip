@@ -1,0 +1,23 @@
+/* --- Meta Data - START ---
+    type GLSL
+    input_buffer imgA /home/per/dev/ip_msc/bin/images/lena.png
+    input_buffer imgB /home/per/dev/ip_msc/bin/images/baboon.png
+    output_buffer out_blend /home/per/dev/ip_msc/bin/images/out_glsl.png
+    double alpha 0.5 0.5 0 1.0
+    double red 1.0 1.0 0 1.0
+    double green 1.0 1.0 0 1.0
+    double blue 1.0 1.0 0 1.0
+------ Meta Data - END --- */
+
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+uniform float alpha;
+uniform float red;
+uniform float green;
+uniform float blue;
+varying vec2 texcoord;
+void main()
+{
+    vec4 color = alpha * texture2D(texture0, texcoord) + (1-alpha) *  texture2D(texture1, texcoord);
+    gl_FragData[0] = vec4(color.x*red, color.y *green, color.z* blue, 1);
+}

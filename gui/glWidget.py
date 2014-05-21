@@ -6,42 +6,43 @@ class GLWidget(QtOpenGL.QGLWidget):
         super(GLWidget, self).__init__(parent)
     
         self.w,self.h = 200,200
-        sp = QtGui.QSizePolicy()
-        sp.setHeightForWidth(True)
+        #sp = QtGui.QSizePolicy()
+        #sp.setHeightForWidth(True)
         #self.setSizePolicy(sp)
-
         self.texture = None
-
+        self.firstTexture = None
 
     def setData(self, data):
-        print data.shape, data.dtype
+        #print data.shape, data.dtype
         self.w = data.shape[1]
         self.h = data.shape[0]
         self.updateGeometry()
-        self.texture = GL.glGenTextures(1)
+        if self.texture == None:
+            self.texture = GL.glGenTextures(1)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
+            GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT,1)
+            GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP )
+            GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP )
+            GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR )
+            GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR )
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
-        GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT,1)
-        GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP )
-        GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP )
-        GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR )
-        GL.glTexParameterf( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR )
-    
         GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, self.w, self.h, 0 , 
-                               GL.GL_RGB, GL.GL_UNSIGNED_BYTE, data)
-
+                        GL.GL_RGB, GL.GL_UNSIGNED_BYTE, data)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        
     def initializeGL(self):
-        pass#self.setData(self.data)
+        pass
+        #self.texture = GL.glGenTextures(1)
 
     def paintGL(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
+        GL.glViewport(0,0,self.viewportW,self.viewportH)
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
         GL.glEnable(GL.GL_TEXTURE_2D)
         if self.texture:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
-
+       
         GL.glDisable(GL.GL_LIGHTING)
 
         GL.glColor3f(1,1,1)
@@ -67,6 +68,8 @@ class GLWidget(QtOpenGL.QGLWidget):
         GL.glLoadIdentity()
         GL.glOrtho(0,1,0,1,0,1)
         GL.glMatrixMode(GL.GL_MODELVIEW)
+        self.viewportW = width
+        self.viewportH = height
 
     def sizeHint(self):
         return QtCore.QSize(self.w,self.h)

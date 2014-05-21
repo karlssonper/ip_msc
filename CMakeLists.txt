@@ -7,8 +7,14 @@ PROJECT(IMAGE_PROCESSING)
 
 #set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.8)
 
-set(SOURCE base)
+set(SOURCE src/base)
 set(LIBRARIES)
+
+
+# compiler definitions for non-windows builds
+if (NOT WIN32)
+  add_definitions(-fPIC)
+endif()
 
 option(OpenCL "OpenCL" ON)
 if(OpenCL)
@@ -25,20 +31,32 @@ if(OpenCL)
   INCLUDE_DIRECTORIES($ENV{OPENCL_INCLUDE_DIR})  
   LINK_DIRECTORIES($ENV{OPENCL_LIB_DIR})
 
-  set(SOURCE ${SOURCE} opencl)  
+  set(SOURCE ${SOURCE} src/opencl)  
 
-  set(LIBRARIES ${LIBRARIES})
+  set(LIBRARIES ${LIBRARIES} OpenCL)
 endif(OpenCL)
+
+option(CUDA "CUDA" ON)
+if (CUDA)
+  find_package(CUDA REQUIRED)
+  include_directories(${CUDA_INCLUDE})
+
+  set(SOURCE ${SOURCE} src/ccuda)  
+
+  set(LIBRARIES ${LIBRARIES} cuda cudart)
+
+endif(CUDA)
 
 option(OpenGL "OpenGL" ON)
 if(OpenGL)
     message("-- Generating build with OpenGL...\n")
 	find_package(OpenGL REQUIRED)   
 	find_package(GLUT REQUIRED)
+	find_package(GLEW REQUIRED)
 	INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})  
 
-	set(SOURCE ${SOURCE} opengl)  
-	set(LIBRARIES ${LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+	set(SOURCE ${SOURCE} src/opengl)  
+	set(LIBRARIES ${LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIBRARY})
 endif(OpenGL)
 
 ADD_LIBRARY(ip ${SOURCE})
@@ -46,18 +64,20 @@ TARGET_LINK_LIBRARIES(ip ${LIBRARIES})
 
 option(Python "Python" ON)
 if (Python)
+
     #SET(Boost_USE_STATIC_LIBS OFF)
 	#SET(Boost_USE_MULTITHREADED ON)		
     #SET(Boost_USE_STATIC_RUNTIME OFF)
-    #find_package(Boost 1.45.0 COMPONENTS python)
+    find_package(Boost 1.45.0 COMPONENTS python)
 	find_package(PythonLibs)
 	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIR})
   
    include_directories(/Users/per/Downloads/boost_1_55_0)
-   add_library(yay SHARED python.cpp )
+   add_library(PyIp SHARED src/python.cpp )
    LINK_DIRECTORIES(/Users/per/Downloads/boost_1_55_0/stage/lib)
-   set_target_properties( yay PROPERTIES SUFFIX ".so")
-   target_link_libraries(yay ip /Users/per/Downloads/boost_1_55_0/stage/lib/libboost_python.a python boost_numpy)
+   set_target_properties( PyIp PROPERTIES PREFIX "")
+   set_target_properties( PyIp PROPERTIES SUFFIX ".so")
+   target_link_libraries(PyIp ip boost_python  ${PYTHON_LIBRARIES} boost_numpy)
 endif(Python)
 
 
@@ -66,8 +86,8 @@ endif(Python)
 
 enable_testing()
 
-add_executable(testOpenCL test)
-target_link_libraries(testOpenCL ip)
-add_test(NAME testOpenCL
-         COMMAND testOpenCL)
+add_executable(test test/test)
+target_link_libraries(test ip)
+add_test(NAME test
+         COMMAND test)
 
