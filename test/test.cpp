@@ -75,9 +75,8 @@ void test(boost::shared_ptr<Base> ip, const char * code)
 
 int main()
 {
-    boost::shared_ptr<OpenCL> cl = OpenCL::Create(OpenCL::GPU);
-  
     std::cout << "Testing: OpenCL..." << std::endl;
+    boost::shared_ptr<OpenCL> cl = OpenCL::Create(OpenCL::GPU);
     test(cl, opencl_code);
     std::cout << "Test passed: OpenCL.\n" << std::endl;
 
