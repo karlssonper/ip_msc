@@ -1,0 +1,14 @@
+\subsection{OpenCL}
+
+OpenCL is a parallel programming framework designed to fit heterogeneous systems where one can expect a range of different computing architechures. One example of a program on a heterogeneous system would be a program where some parts of the computations and setups are done on the CPU and the rest on the GPU. OpenCL also supports parallel programming for homogeneous systems. In a case where one has a multi-core CPU, OpenCL could be used to in such way to have one thread control the state of the program while the rest of the threads performs a computation of some sort and later sync with the main thread.
+\newline
+
+OpenCL is standarized by the Khronos Group, the same group in charge of well known OpenGL standarization. The group consits of people from many different companies in the industry such as AMD, nVIDIA, intel, Apple, Samsung. This is seen as a positive thing as they all decide the direction the group is taking. It also makes sure the framework compatible for different system and platforms. One of the goals of OpenCL is to be as flexible as possible.
+\newline
+
+OpenCL can be used in any parallel enviroment as long as the OpenCL compiler and runtime library is implemented. This means, when writing the parallel code, a software developer do not have have care about operating system, processors and memory types. The OpenCL C language is very similar to the regular C language. It is focused around computations and some features are added on top of the C language to simplfy things, like SIMD vector operations and multiple memory hierarhies. Other features, such as printing, have been removed as they are not as useful in computing and hard to implement on all platforms. The program calling the OpenCL code can be written in either C or C++ as it will be using the OpenCL runtime library. 
+\newline
+
+The notion of host is often used in standard and offical OpenCL literature. The host refers to the environment where the OpenCL code is called from (not executed). This is the CPU in almost all of the cases. An OpenCL deviced is the environment where the OpenCL is executed. This can be the GPU, DSP, CELL/B.E, CPU are some examples of OpenCL devices that often contain a lot of small compute units each. The memory associated with these processors are also included in the defintion of an OpenCL device. The OpenCL code executed on a deviced is called kernel.
+\newline
+
