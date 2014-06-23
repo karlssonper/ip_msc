@@ -1,0 +1,52 @@
+\subsection{GLSL}
+
+\subsubsection{OpenGL}
+
+OpenGL is a cross-platform API created in 1992. It has been an industry-standard ever since where the major decisions are made by the OpenGL Architecture Review Board, ARB. ARB was created by Silicon Graphics in 1992 and contained representatives from SGI, Intel, Microsoft, Compaq, Digital Equipment Corporation, Evans \& Sutherland and IBM. Later on, companies such as 3Dlabs, Apple, ATI, Dell, IBM, Intel, nVIDIA and Sun Microsystems were added. OpenGL shares many characteristics of a previous API called Iris GL. It is designed in such way that it aimes to the be lowestlevel interface for accessing graphics hardware but still provide hardware independence. OpenGL is supported in PC, Mac and Unix-systems.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=100mm]{img/fixed-gl.jpg}
+\caption{The OpenGL pipeline until version 1.5 had fixed functionality.}
+\label{glfixed}
+\end{figure}
+
+Figure \ref{glfixed} shows the overview of the complete OpenGL pipeline until version 1.5. It was said to have fixed functionality because every OpenGL implementation is required to have the same functionality. The set of operations and how they were applied were defined by the fixed OpenGL specification. Step number 6 in Figure \ref{glfixed}, the Fragment Processing, is where each fragment gets its final value. A fragment can be thought of as the data needed to shade the pixel and the data to decide if the fragment is to be displayed as a pixel (need information about depth, alpha and so on). The fixed fragment stage could only handle tasks such as interpolating color values, texture mapping and fog. 
+
+\subsubsection{The shading language}
+
+In version 2.0, OpenGL introduced GLSL, the OpenGL shading language. With the OpenGL shading language, the fixed functionality stages for vertex and fragment processing (Step 2 and 6 in Figure \ref{glfixed}) could now be customized and programmed. It is still possible to do everything that the previous fixed pipeline supported but it also gives the software developer the opportunity to alone control the output. The programs written in GLSL are called OpenGL shaders, either vertex shader or fragment shader. The OpenGL Shading Language is a high-level procedural language based on C and C++ sytax and flow control. Vector and matrix types/operations is natively supported together with a set of  math functions commonly used in graphics shading.
+\newline
+
+\subsubsection{Shaders}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=100mm]{img/frag-gl.jpg}
+\caption{The input and outputs of a GLSL fragment shader.}
+\label{glfrag}
+\end{figure}
+
+Shaders are compiled from an input source of text at runtime. They are later linked to an OpenGL program and are then executable. In image processing, only the fragment shader is of importance. In a fragment shader, any image processing algorithm can be applied on an input image. A fragment shader operates on one fragment at a time. Fragment shaders must be written in such way that the can operator simulationeusly. When a fragment shader is being executed, it has no knowledge about other fragments and their data. 
+\newline
+
+Figure \ref{glfrag} shows the inputs and output of a fragment processor. Some variables are built-in, specified by the OpenGL implementation. There is a notion of varying and uniform variables. Uniform variables are, as the name suggests, uniform accross all shaders. Varying variables are defined per vertex in the vertex shader. Before processing each fragment, the hardware interpolates the geometry and gives the fragment shader the correct varying attributes. An example of a varying attribute would be where one wants to output a texture on some sort of geometry. The texture coordinates would then be defined at each vertex. In the later processing of the fragment shader, these texture coordinate are interpolated and can now be used to do texture lookups. 
+
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= Example of adding two images in GLSL, label=glsl1]
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+
+uniform float scale;
+varying vec2 texcoord;
+
+void main()
+{
+    gl_FragData[0] = scale * (
+        texture2D(texture0, texcoord) + 
+        texture2D(texture1, texcoord));
+
+}
+\end{lstlisting}
+
+Code \ref{glsl1} shows an example of fragment shader in GLSL that adds two images together. The images have been converted to OpenGL textures, \texttt{texture0} and \texttt{texture1}. The function \texttt{texture2D} together with the varying variable \texttt{texcoord} is used to fetch the data from a texture. The value is multiplied with the uniform value \texttt{scale} (same for all fragments) and finally written to the framebuffer through the built-in \texttt{gl\_FragData}. Syntax is similar to a C program and every fragment shader needs a \texttt{main} function.
