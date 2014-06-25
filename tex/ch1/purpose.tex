@@ -1,6 +1,48 @@
 \subsection{Purpose}
 
-Most image processing tasks are well-suited for parallel computing. The average image consists of millions of individual pixels. This is a very good case for GPU computing where a lot of the compute units can be utilized at the same time. 
+Most image processing tasks are well-suited for parallel computing. The average image consists of millions of individual pixels. This is a very good case for GPU computing where a lot of the compute units can be utilized at the same time. To get started with GPU computing, one has to choose a parallel GPU environment to write the code in. There are different environments available, each with its own pros and cons. Which one to choose can sometimes be difficult as it probably requires testing. In some cases it might be even worse, environments are better for different tasks because of special features. 
 \newline
 
-As discussed in the previous chapter, there are different categories in image processing. This thesis will focus on the case where an input image is used to produce an output image. 
+GPU computing can be divided in two steps. The first step is the configuration step where one instantiates the GPU environment, allocates memory on the GPU, copy data to GPU and calls the executing image processing functions on the GPU. This step varies from environment to enviroment and can be tedious to set up every time you want to write a program with GPU computing. This motivates the use of a framework for efficient image processing on the GPU. The thesis will focus on how to implement this framework, supporting the common GPU environments. It will try explore and hopefully answer the following questions:
+\newline
+
+\begin{itemize}
+\item{What do the common GPU architechures have in common?}
+\item{How do you generalize GPU computing for image processing?}
+\item{Is it possible to write one functional framework although the environments are architechures are different?}
+\item{What restrictions have to be made?}
+\item{Is it worth doing image processing on the GPU instead of the CPU?}
+\end{itemize}
+
+The second part of GPU computing is implementing the actual algorithms that run on the GPU. This part is hard to generalize since every GPU environment has its own coding language and special features. 
+\newline
+
+The work of this thesis will result in three differnet software components. They are the following:
+
+\begin{enumerate}
+\item{\bf{General backend framework}}
+\begin{itemize}
+\item{C++ library.}
+\item{Cross-platform using CMake.}
+\item{Easy to disable components from compilation.}
+\item{Possible to dynamically rebuild GPU code at runtime.}
+\item{Support python bindings.}
+\item{Unit tests for all implementations and cases.}
+\end{itemize}
+
+\item{\bf{Graphical User Interface application}}
+\begin{itemize}
+\item{Python using QT python bindings.}
+\item{Graphical display of the image outputs.}
+\item{Being able to quickly change paramater values.}
+\item{Support for live coding.}
+\item{Save a algorithm setup for later use, including code and parameters.}
+\end{itemize}
+
+\item{\bf{Command-line application}}
+\begin{itemize}
+\item{Python}
+\item{Run the algorithm setup saved from the GUI-version.}
+\item{Possible to change parameter values through command-line arguments.}
+\end{itemize}
+\end{enumerate}
