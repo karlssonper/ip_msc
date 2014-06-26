@@ -1,3 +1,14 @@
 \subsection{Limitations}
 
-As discussed in the previous chapter, there are different categories in image processing. This thesis will focus on the case where an input image is used to produce an output image. 
+As discussed in the previous chapter, there are different categories in image processing. This thesis will focus on the case where an input image is used to produce an output image. Mainly because it is hard to generalize things like feature extraction across all GPU environments. The framework is instead going to support algorithms where an arbitrary number of input images are going to produce an arbitrary number of output images. The number of input images and output images do not have to match. The framework need to support multipass algorithms where multiple GPU programs are being called sequentionally and where the output of one program can be the input of the following one. The framework is going support images with one to four channels of colors and where the data has either floating point precision or is of the unsigned byte type (often referred to as unsigned char).
+\newline
+
+The framework is going to support the following GPU computing environemnts:
+
+\begin{itemize}
+\item{{\bf CUDA} - NVIDIA}
+\item{{\bf OpenCL} - Khronos Group}
+\item{{\bf GLSL} - OpenGL Shading Language}
+\end{itemize}
+
+CUDA and OpenCL are the two most common choices today in the world of general-purpose GPU computing. Before OpenCL and CUDA, people used programmable shaders in 3D graphics libraries such as OpenGL and DirectX to perform image processing on the GPU. Since DirectX and their HLSL shading language and Direct Compute environment only are support on Microsoft Windows systems, they are not included in the framework of this thesis as it aims to be flexible and cross-platorm (supporting both Linux, Mac and Windows systems).
