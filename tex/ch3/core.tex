@@ -1,0 +1,64 @@
+\subsection {Designing the core library}
+
+On an abstract level, the workflows in the GPU environemnts are more or less the same. This motivates the use of a library where a developer can target a common abstract interface and not have to worry about specific GPU environment implementations. The library is named \emph{gpuip} which stands for \emph {GPU Image Processing}. The core superclass in \emph{gpuip} is called {\tt ImageProcessor} and it is through this class that all the GPU communication is going to happen. An implementation of an {\tt ImageProcessor} needs to support the following common steps:
+
+\begin{enumerate}
+\item Compile kernel text code and build into GPU machine code.
+\item Allocate memory on the GPU.
+\item Copy data from CPU to GPU and vice versa.
+\item Run kernels on the GPU.
+\end{enumerate}
+
+These steps are all virtual functions in the {\tt ImageProcessor} class that needs to be implemented in the subclasses. The class {\tt Buffer} provides memory allocation information to {\tt ImageProcessor}. An algorithm can have an arbitrary amount of buffers. The input and outputs are stored in buffers. Each buffer has a unique name and information about data type and how many channels there are per pixel. The supported data formats are {\tt unsigned byte, half} and {\tt float}. {\tt half} is a 16-bit floating point scalar in comparison to the standard 32-bit {\tt float}. Each buffer can have between one to four channels per pixel. Two or three channels per pixels is supported but not recommended as it leads to uncoalesced reads and writes[ref]. 
+\newline
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= Buffer struct, label=bufferapi]
+struct Buffer{
+    typedef shared_ptr<Buffer> Ptr;
+    enum Type { UNSIGNED_BYTE, HALF, FLOAT };
+    const string name;
+    Type type;
+    unsigned int channels;
+};
+\end{lstlisting}
+\newpage
+The {\tt Kernel} class provides the following:
+\begin{enumerate}
+\item GPU kernel code. Syntax and program structure depends on GPU environment.
+\item Which buffers are going to be used as input? What are they called in the kernels?
+\item Which buffers are going to have data written to them?
+\item Parameters used in the kernel code.
+\end{enumerate}
+
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= Kernel struct, label=kernelapi]
+struct Kernel {
+    struct BufferLink {
+        Buffer::Ptr buffer;
+        string name;
+    };
+    typedef shared_ptr<Kernel> Ptr;
+    const string name;
+    string code;
+    vector<BufferLink> inBuffers;
+    vector<BufferLink> outBuffers;
+    vector<Parameter> params;
+};
+\end{lstlisting}
+
+As can been seen in Code \ref{bufferapi} and Code \ref{kernelapi}, both structs have a {\tt Ptr} typedef. A {\tt Buffer::Ptr} is a shared pointer[ref] to a {\tt Buffer} object. To register a {\tt Buffer} or a {\tt Kernel} to an {\tt ImageProcessor} object, the factory method pattern[ref] is used. An example of this can be seen in Code \ref{factoryfunc}.
+\newline
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= Factory functions to create Buffer and Kernel objects, label=factoryfunc]
+class ImageProcessor {
+    ... rest of ImageProccessor definitions ...
+
+    Buffer::Ptr CreateBuffer(const string & name,
+                             Buffer::Type type,
+                             unsigned int channels);
+
+    Kernel::Ptr CreateKernel(const string & name);
+};
+\end{lstlisting}
+In this case, the factory method pattern guarantees that the {\tt ImageProcessor} is the \emph{owner} of the buffers and kernel objects since it is going to store a copy of the shared pointer internally. As long as the {\tt ImageProcessor} exists, the {\tt Buffer} and {\tt Kernel} objects are also guaranteed to exist. This makes it impossible to reach cases where the {\tt ImageProcessor} is using pointers that are pointing to deleted objects and is considered a safe approach. Anyone using the library can still create and delete {\tt Buffer} and {\tt Kernel} objects on their own, but they will never be able to register these objects themselves.
+
