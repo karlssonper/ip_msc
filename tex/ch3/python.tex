@@ -1,0 +1,6 @@
+\subsection{Python bindings}
+
+Boost python [ref] is used to make the C++ code accessible in a python environment. When copying data from and to the GPU, one had to pass a void pointer in the gpuip C++ API. The concept of pointer does not exist in python. Instead, the CPU data is attached to the buffer itself inform of a numpy [array]. All the data tranfsers between GPU buffers have to go through the numpy array.
+\newline
+
+Developing an application is most of the times faster in Python. A common task in image processing is to read image data from disk and later on write it to disk once the processing is done. To simply this step, read and write functions are included in the python bindings. Depending on the per element data in the numpy array, different file formats are available. For {\tt half} and {\tt float} precision, the target format is the ILM OpenEXR. When the data consists of unsigned byte, the more common image formats png, jpeg, tiff and tga are available through the header-only library CImg[ref].  

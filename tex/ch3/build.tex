@@ -1,0 +1,6 @@
+\subsection{Cross-platform build}
+\subsubsection{Generate build setup}
+Every platform has their own way of compiling source code into binaries. On Unix systems, gcc and makefiles is the common option while on Windows systems most code is compiled with Microsoft Visual Studio. CMake is a cross-platform build system by Kitware[ref]. CMake controls the software compilation step using platform independent configuration files. Option variables and cached string values can be defined in the configuration files and later on be modified at either the command line version of cmake or the gui version. This makes CMake a very powerful tool to setup customizable builds. For example, in gpuip, one can easily disable the build of the python bindings if it is not needed. Another case could be if the compiling system does not have a NVIDIA GPU and want to build gpuip without CUDA support. Once all options are set, CMake generates either Unix Makefiles, Microsoft Visual Studio or other build setups that are already configured. This means all the include paths for header files have been set and linking to other libraries is taken care of.
+
+\subsubsection{Library dependencies}
+

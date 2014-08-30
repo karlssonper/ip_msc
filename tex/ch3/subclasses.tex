@@ -1,0 +1,46 @@
+\subsection{Implementing the subclasses}
+\subsubsection{GLSL}
+The user-provided kernel code is a fragment shader. To build a GLSL program, one also needs to provide a vertex shader. The built-in vertex shader in gpuip is simple and draws a 2D quad across the viewport, covering all pixels, and defines texture coordinates in each corner. These texture coordinates, as mentioned in [ref], will be interpolated across all fragments. Since all fragment shaders use the same vertex shader code, it is compiled once and shared between them
+.
+\newline
+
+For each buffer, an OpenGL texture is generated and memory is allocated on the GPU. For each kernel, a framebuffer object is created. Depending on the kernel setup, every output buffer of a kernel is mapped the corresponding framebuffer object. This means that later on when the simple quad is being rendered, the data is rendered to the textures directly. To copy data from and to the GPU, the synchronous functions {\tt glGetTexImage} and {\tt glTexImage2D} are used.
+\newline
+
+The input textures (buffers) and parameters has to be set before the gpu kernel code can be executed. Each uniform attribute has a location in the GLSL program. To get the location, {\tt glGetUniformLocation} is used. It is important the the input texture and parameter in the kernel code is named the same as the {\tt Kernel::BufferLink::name} and {\tt Kernel::params}, otherwise the GPU code will not run. Before calling the draw functions, the viewport has to be resized to the same resolution as the output buffers. The GPU calls are synchronised with {\tt glFinish} and timings are queried with {\tt glGetInteger64v} and {\tt GL\_TIMESTAMP}.
+
+\subsubsection{OpenCL}
+
+OpenCL needs a context for saving states and an event queue to register GPU operations in. Allocating memory is done through OpenCL buffers and kernel code is compiled at runtime with the standard OpenCL API calls {\tt clCreateProgramWithSource}, {\tt clBuildProgram} and {\tt clCreateKernel}.
+\newline
+
+When executing the kernel code, the kernel arguments have to be passed in the same order as they are presented in the kernel function. Kernel arguments include pointers to input and output buffers, user-defined parameters and gpuip parameters. Since the C++ code is locked to compile time and the kernel code is written at runetime,  there have to be rules that decides which order arguments appeaer in. The current ordering rules are:
+
+\begin{enumerate}
+\item {\tt const} pointers to input buffers
+\item pointers to output buffers
+\item user-defined arguments
+\item gpuip-arguments (like image width and image height)
+\end{enumerate}
+
+Launching the kernels can only be done asynchronously. To guarantee that all GPU computation is done when the function returns, the OpenCL state is synced with {\tt clFinish}. Timings are captured with the {\tt clGetEventProfilingInfo}.
+
+\subsubsection{CUDA}
+
+Unfortunately, CUDA does not support compilation of GPU code at runtime which was one of the goals of gpuip. However, it does support loading of ptx, parallel thread execution, at runtime. Ptx is a psuedo-assembly language used by NVIDIA on the GPU. To get ptx files, we must use the NVIDIA-provided CUDA compiler \emph{nvcc}. Nvcc is called by {\tt popen} ( {\tt \_popen} on windows) which creates a pipe and invokes a shell command. When closing the pipe with {\tt pclose}, the exit status of nvcc can be queried. If anything else than zero, the compilation failed and the error string can be read from the pipe.
+\newline
+
+CUDa comes with a driver API and a runtime API. The runtime API is user-friendly and the driver API gives control. They can both be used at the same time. Loading compiled ptx files and execution of kernel calls are done through the driver API and the runtime API is used for context creation, memory allocation and data transfer. Allocating memory on the GPU is straightforward with the {\tt cudaMalloc} function, which is very similar to the C version {\tt malloc}. Copying data is also simple with {\tt cudaMemcpy}.
+\newline
+
+CUDA kernels are executed in blocks with a fixed amount of threads per block. In gpuip, every block consists of 256 threads distributed in a 16x16 thread-block. To make sure every thread corresponds to one pixel, we use the following equations to determine the number of blocks $N_x$ and $N_y$:
+
+\begin{equation}
+N_x = floor(W/16) + 1 ,\ 
+N_y = floor(H/16) + 1
+\end{equation}
+
+$W$ is the image width in pixels and $H$ is the image height. Some threads will have $xy$-coordinates outside of the image domain. To avoid writing to non-allocated memory, all threads need to check if they are inside the image domain.
+
+
+

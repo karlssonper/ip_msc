@@ -62,3 +62,71 @@ class ImageProcessor {
 \end{lstlisting}
 In this case, the factory method pattern guarantees that the {\tt ImageProcessor} is the \emph{owner} of the buffers and kernel objects since it is going to store a copy of the shared pointer internally. As long as the {\tt ImageProcessor} exists, the {\tt Buffer} and {\tt Kernel} objects are also guaranteed to exist. This makes it impossible to reach cases where the {\tt ImageProcessor} is using pointers that are pointing to deleted objects and is considered a safe approach. Anyone using the library can still create and delete {\tt Buffer} and {\tt Kernel} objects on their own, but they will never be able to register these objects themselves.
 
+To make things simple, all GPU operations are synchronous which means that once a function that communicates with the GPU has been been called, it is not going to return until the GPU is done proceeding the task. There are asynchronous ways of calling the GPU in all environment but they require syncing stages. As discussed in [ref], it might be worth supporting asynchronous calls in the future since they could potentially give better performance.
+\newline
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= {\tt ImageProcessor} API for GPU operations, label=ipapi]
+class ImageProcessor {
+    ... rest of ImageProccessor definitions ...
+
+    virtual double Allocate(string * error);
+    virtual double Build(string * error);
+    virtual double Run(string * error);
+    virtual double Copy(Buffer::Ptr buffer,
+                        CopyOperationEnum operation,
+                        void * data,
+                        string * error);
+};
+\end{lstlisting}
+
+As can be seen in Code \ref{ipapi}, all functions that perform GPU operations returns the execution time as a {\tt double} and takes a pointer to an error {\tt string}. If an error occurs inside one of these functions, a \emph{negative} value is returned and the error message can be found in the error string. 
+
+One of the goals when designing \emph{gpuip} is to be an easy-to-use library. {\tt ImageProcessor} is the superclass and GLSL, CUDA and OpenCL would implemented as subclasses. The most common approach in object-oriented programming is to put subclasses in different header and source files. To use a certain implementation later on, one would have to include the header file of the implementation and create the subclass object itself (but store it as an pointer to the superclass for flexbility between different implementations. A typical user-case can be seen in Code \ref{includeex}.
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= Example of common use of object-oriented programming, label=includeex]
+#include <gpuip-cuda.h>
+#include <gpuip-glsl.h>
+#include <gpuip-opencl.h>
+
+void some_function(string environment)
+{
+  ImageProcessor ip;
+  if(environment == 'cuda') {
+    ip = new gpuip::CUDA();
+  } else if(environment == 'glsl') {
+    ip = new gpuip::OpenCL();
+  } else if(environment == 'opencl') {
+    ip = new gpuip::GLSL();
+  }
+
+  ...
+}
+\end{lstlisting}
+
+Designing gpuip like the example in Code \ref{includeex} would make the public interface less clean, involve different header files and could potentially motivate the use of pointer casting which is not ideal[ref]. Instead, the public interface of gpuip consinsts of only one header file and the only exposed class is the {\tt ImageProcessor} class. Under the hood, there are still going to be subclasses, but the the developer using the library will not notice this. This enforces that all implementations always use the same function calls and work the same way. The use of factory functions are used once again, this time static as they are placed within the class itself.
+\newline
+\begin{lstlisting}[caption= {\tt ImageProcessor} static API, label=ipapi]
+enum Environment { OPENCL, CUDA, GLSL };
+class ImageProcessor {
+    ... rest of ImageProccessor definitions ...
+
+  static ImageProcessor::Ptr Create(Environment env);
+  static bool CanCreate(Environemt env);
+};
+\end{lstlisting}
+
+To make this work, we include all the implemented subclasses in the {\tt ImageProcessor} source file. An example of this can be seen in Code \ref{forw}
+\newline
+\begin{lstlisting}[caption= {\tt ImageProcessor::Create} spawns instances of subclasses to itself, label=ipapi]
+// gpuip.cpp
+#include <gpuip-cuda.h> 
+static ImageProcessor::Ptr Create(Environment env)
+{
+  if (env == CUDA) {
+    return ImageProcessor::Ptr(new CUDAImpl());
+  }
+  ...
+}
+\end{lstlisting}
+
+

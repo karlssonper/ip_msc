@@ -10,13 +10,16 @@
 \definecolor{Brown}{cmyk}{0,0.81,1,0.60}
 \definecolor{OliveGreen}{cmyk}{0.64,0,0.95,0.40}
 \definecolor{CadetBlue}{cmyk}{0.62,0.57,0.23,0}
+\definecolor{orange}{rgb}{0.7,0.3,0}
+\definecolor{graycolor}{rgb}{0.2,0.2,0.2}
 \definecolor{lightlightgray}{gray}{0.9}
 
 \lstset{
 language=C,                             % Code langugage
 basicstyle=\ttfamily,                   % Code font, Examples: \footnotesize, \ttfamily
 keywordstyle=\color{OliveGreen},        % Keywords font ('*' = uppercase)
-commentstyle=\color{gray},              % Comments font
+commentstyle=\color{graycolor},              % Comments font
+stringstyle=\color{orange},
 numbers=left,                           % Line nums position
 numberstyle=\tiny,                      % Line-numbers fonts
 stepnumber=1,                           % Step between two line-numbers
@@ -50,7 +53,6 @@ morekeywords={__global__, __device__, __global, __kernel},  % CUDA specific keyw
 \include{ch1/intro}
 \include{ch2/enviroments}
 \include{ch3/implementation}
-\include{ch4/testcases}
 
 \include{results}
 \include{discussion}
