@@ -1,7 +1,40 @@
 \section{Discussion}
+\subsection{Comparision between the GPU environments}
 
-\subsection{GL interp}
+
+\subsection{OpenGL interoperability}
+
+Currently, if an image has been created/modified with gpuip and needs to be display, it has to first be copied back to the CPU and then uploaded back to the GPU for viewing. Both OpenCL and CUDA supports OpenGL interoperability by mapping a GPU buffer to an OpenGL buffer. This means that data produced by OpenCL and CUDA can be used as an OpenGL texture without unnecessary transfering between the CPU and the GPU. Although more internal work, the public API for {\tt Buffer} would not change much:
+\newline
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= gpuip OpenGL interoperability, label=glinter]
+struct Buffer{
+  // ... rest of Buffer declarations 
+  bool glInteroperability;
+  GLint glTexture;
+};
+\end{lstlisting}
+
+I think this option would make the library more lucrative to use in applications that are using OpenGL for viewing graphics. One particular case I could see it being useful is in deferred rendering for realtime 3D graphics. Once geometry has been rendered to different textures, it might be faster to apply operations in OpenCL or CUDA than it is in GLSL (there is no support for sharing memory between execution threads in GLSL).
+
 \subsection{Template kernels}
-\subsection{Comparision}
+
+Consider a case where you only want to write one kernel file but support multiple fileformats. For GLSL, this is already true and quite practical. However, it is not possible in OpenCL and CUDA. CUDA supports templated functions. It would be possible to have the data types as template typenames and therefore only writing the kernel once if {\tt half} (16-bit floating point) computation was supported. In OpenCL, half computation is supported if the graphics drivers come with the {\tt cl\_khr\_fp16} extension. OpenCL does not support templates but since we parse the kernel code ourselves in gpuip, we could implement our own templating rules and generate one OpenCL kernel for every data type that gpuip supports. 
+
 \subsection{Computations as input}
+
+It is only possible to write data per pixel in gpuip. If an algorithm would require a global property of a buffer, like the maximum or average value, it would not be possible. For example, if someone wants to write a tonemapping algorithm, they might compute a tonemapping value per pixel and then use the average value of all pixels as input to a second step in the tonemapping. A kernel can have user-defined parameters but not parameters that depends on the output of a kernel. It might be nice to add an option to make it possible to use the computation of a buffer as input. To make things still fairly simple, it could be restricted to only allow computations of one-dimensional buffers. Then a computation could be operators such as min, max, median, avg and sum. Behind the scenes, gpuip would perform the gpu algorithms. For example, to get the minimum value of a one-dimensional buffer, it would have to run a reduce algorithm. It might be worth exploring the common libraries for the GPU computing. Using libraries like Boost Comput[ref] and Thrust[ref] would save time and probably have better performance.
+
 \subsection{Work item distribution}
+
+Some algorithms might be optimized further by allowing a work item/thread write to more than one pixel. For example, in separable blur algorithms, it might be worth splitting the algorithm in two steps and have each work item operate on a row/column alone. Memory lookups tend to be the expensive part of an algorithm and if a work item can work alone on a row, data could be stored in the local registers as the work item iterates over the pixels. The public API of gpuip could be changed to something like this.
+\newline
+\renewcommand{\lstlistingname}{Code}
+\begin{lstlisting}[caption= gpuip kernel work item distribution, label=dist]
+struct Kernel{
+  // ... rest of Kernel declarations 
+  enum WorkDistribution { PIXEL, ROW, COLUMN };
+  WorkDistribution distribution;
+};
+\end{lstlisting}
+A different work item distribution is not possible in GLSL where every kernel has to be executed on a per pixel level.
